@@ -69,7 +69,7 @@ This script:
 #### 🔧 1. Download and Run
 
 ```bash
-wget https://raw.githubusercontent.com/<yourusername>/ubuntu-hybrid-gpu-fix/main/fix-hybrid-gpu.sh
+wget https://raw.githubusercontent.com/nik0811/ubuntu-hybrid-gpu-fix/refs/heads/master/fix-hybrid-gpu.sh
 chmod +x fix-hybrid-gpu.sh
 sudo ./fix-hybrid-gpu.sh
 ```
