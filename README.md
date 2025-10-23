@@ -1,5 +1,3 @@
----
-
 # 🧰 ubuntu-hybrid-gpu-fix
 
 ### 🧩 Problem Statement
