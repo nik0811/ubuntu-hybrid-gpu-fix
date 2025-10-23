@@ -1,6 +1,5 @@
 ---
 
-````markdown
 # 🧰 ubuntu-hybrid-gpu-fix
 
 ### 🧩 Problem Statement
@@ -243,7 +242,5 @@ MIT License — free to use, modify, and distribute.
 | `nvidia-smi`                                   | ✅ Works                   |                        |
 | Hybrid offload (`__NV_PRIME_RENDER_OFFLOAD=1`) | ✅ Works                   |                        |
 | Cursor IDE (Wayland)                           | ✅ Fixed (software render) |                        |
-
-```
 
 ---
