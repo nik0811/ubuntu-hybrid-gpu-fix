@@ -1,71 +1,69 @@
 # 🧰 ubuntu-hybrid-gpu-fix
 
-### 🧩 Problem Statement
+Fix **black screen** or **no display** issues on Ubuntu systems with **AMD + NVIDIA hybrid GPUs** (e.g., Ryzen + RTX).
 
-After installing or upgrading **Ubuntu (24.04 or similar)** on systems with **both AMD and NVIDIA GPUs**, the desktop GUI may fail to load.
+---
 
-**Common symptoms:**
+## 🧩 Problem Statement
+
+After installing or upgrading **Ubuntu (24.04 or later)** on systems with both **AMD and NVIDIA GPUs**, the desktop GUI may fail to load.
+
+### ⚠️ Common Symptoms
 
 - Both monitors stay **black** after GRUB.
 - `journalctl` shows:
   ```bash
   (EE) open /dev/dri/card0: No such file or directory
   (EE) no devices detected
-````
 
 * `gdm3` fails to start with “no screens found”.
 * Running `nvidia-smi` fails or hangs.
 * Text mode login works, but no Xorg/Wayland session loads.
 
-**Root cause:**
-The NVIDIA driver claims the display output (framebuffer) that should belong to AMD, breaking GDM/Xorg initialization.
+### 💥 Root Cause
+
+The **NVIDIA driver** claims the framebuffer that should belong to AMD, breaking GDM/Xorg initialization.
+
+Ubuntu’s NVIDIA packages auto-enable **Kernel Mode Setting (KMS)** for NVIDIA, which causes:
+
+* Both GPUs trying to control the primary display
+* Xorg failing with “no devices detected”
+* Endless login loops or black screens
 
 ---
 
-### 🔍 Root Cause
-
-Ubuntu’s NVIDIA package auto-enables **kernel mode setting (KMS)** for NVIDIA by default.
-On systems with **AMD iGPU** (display) and **NVIDIA dGPU** (compute), this results in:
-
-* Both GPUs trying to control the primary display.
-* Xorg failing with “no devices detected”.
-* Endless login loops or black screens.
-
----
-
-### ✅ Solution Summary
+## ✅ Solution Summary
 
 This project’s script automatically:
 
-1. **Detects AMD and NVIDIA PCI Bus IDs**
-2. **Backs up** current Xorg, modprobe, and module-load configuration files
-3. **Cleans old or broken NVIDIA configs**
-4. **Creates a correct hybrid GPU configuration**:
+1. **Detects** AMD and NVIDIA PCI Bus IDs
+2. **Backs up** existing Xorg, modprobe, and module-load configs
+3. **Cleans up** broken NVIDIA configuration files
+4. **Creates** a proper hybrid GPU setup:
 
-   * AMD (`amdgpu`) = **Primary Display Driver**
-   * NVIDIA (`nvidia`) = **Compute / PRIME Offload**
-5. **Enables PRIME Render Offload**
-   You can then launch apps on the NVIDIA GPU using:
+   * AMD (`amdgpu`) → **Primary Display Driver**
+   * NVIDIA (`nvidia`) → **Compute / PRIME Offload**
+5. **Enables PRIME Render Offload**, so you can run apps on NVIDIA GPU with:
 
    ```bash
    __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia <app>
    ```
-6. **Rebuilds initramfs and updates grub**
+6. **Rebuilds initramfs** and **updates grub**
 
 ---
 
-### 🧠 Why This Works
+## 🧠 Why This Works
 
-* Forces `amdgpu` to be the only active framebuffer driver.
-* Ensures correct module load order: `amdgpu` → `nvidia`.
-* Keeps `modeset=1` for NVIDIA PRIME while preventing framebuffer conflicts.
-* Creates explicit Xorg BusID mappings to avoid auto-detect failures.
+* Forces `amdgpu` to be the only active framebuffer driver
+* Ensures load order: `amdgpu` → `nvidia`
+* Keeps NVIDIA PRIME functional without framebuffer conflict
+* Adds explicit BusID mappings to avoid Xorg detection errors
 
 ---
 
-### 🪄 Script Usage
+## 🪄 Usage Guide
 
-#### 🔧 1. Download and Run
+### 🔧 Step 1: Download and Run
 
 ```bash
 wget https://raw.githubusercontent.com/nik0811/ubuntu-hybrid-gpu-fix/refs/heads/master/fix-hybrid-gpu.sh
@@ -73,16 +71,16 @@ chmod +x fix-hybrid-gpu.sh
 sudo ./fix-hybrid-gpu.sh
 ```
 
-#### 🌀 2. Reboot
+### 🌀 Step 2: Reboot
 
 ```bash
 sudo reboot
 ```
 
-#### 🧾 3. Verify After Reboot
+### 🧾 Step 3: Verify After Reboot
 
 ```bash
-# both drivers loaded
+# Both drivers loaded
 lsmod | egrep "amdgpu|nvidia"
 
 # NVIDIA compute visible
@@ -95,14 +93,14 @@ glxinfo | grep "OpenGL renderer"
 __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo | grep "OpenGL renderer"
 ```
 
-✅ Expected:
+✅ **Expected results:**
 
-* AMD as default renderer
-* NVIDIA available for offload rendering
+* AMD → default renderer
+* NVIDIA → available for offload
 
 ---
 
-### 🧩 Example Output
+## 🧩 Example Output
 
 ```bash
 $ lsmod | egrep "amdgpu|nvidia"
@@ -122,18 +120,18 @@ OpenGL renderer string: AMD Radeon Graphics (amdgpu)
 
 ---
 
-### 🧠 Technical Notes
+## 🧠 Technical Notes
 
-* Works on Ubuntu 24.04+ (kernel ≥ 6.8)
-* Supports GDM3, Xorg, and Wayland
-* Compatible with driver versions: **535 / 550 / 560 / 580 (beta)**
-* Supports all AMD + NVIDIA hybrid systems (Ryzen + RTX, etc.)
+* Tested on **Ubuntu 24.04+ (Kernel ≥ 6.8)**
+* Supports **GDM3**, **Xorg**, and **Wayland**
+* Compatible NVIDIA drivers: **535 / 550 / 560 / 580 (beta)**
+* Works with all **AMD + NVIDIA hybrid laptops / desktops**
 
 ---
 
-### 🧰 Restore (if needed)
+## 🧰 Restore (if needed)
 
-All files modified by the script are backed up under:
+All modified files are backed up under:
 
 ```
 /root/hybrid-gpu-backup-YYYYMMDD-HHMMSS/
@@ -149,7 +147,7 @@ sudo reboot
 
 ---
 
-### 🧪 Force an App to Use NVIDIA GPU
+## 🧪 Run an App on NVIDIA GPU
 
 Example:
 
@@ -165,65 +163,61 @@ glxinfo | grep "OpenGL renderer"
 
 ---
 
-### 📁 Repository Structure
+## 📁 Repository Structure
 
 ```
 ubuntu-hybrid-gpu-fix/
 ├── fix-hybrid-gpu.sh       # Main script
-├── README.md               # Documentation (this file)
-└── LICENSE                 # Optional (MIT)
+├── README.md               # Documentation
+└── LICENSE                 # (MIT)
 ```
 
 ---
 
-## 🩹 Fix: Cursor IDE Window Opens but UI Is Frozen on AMD / Hybrid GPUs (Linux)
+## 🩹 Bonus Fix: Cursor IDE UI Frozen on AMD / Hybrid GPUs (Linux)
 
-If Cursor opens but you **can’t click or type anywhere**, it’s caused by
-**Electron’s Wayland rendering bug** on AMD (Mesa) or hybrid GPU systems.
+If **Cursor IDE** opens but the UI is **frozen / unclickable**, it’s due to an Electron Wayland rendering bug.
 
-#### ✅ Solution (Ubuntu / Debian)
+### ✅ Fix (Ubuntu / Debian)
 
-1. Open the Cursor desktop launcher file:
+1. Edit the desktop entry:
 
    ```bash
    sudo nano /usr/share/applications/cursor.desktop
    ```
 
-2. Replace both existing `Exec=` lines with:
+2. Replace both `Exec=` lines with:
 
    ```ini
    Exec=env LIBGL_ALWAYS_SOFTWARE=1 /usr/share/cursor/cursor --no-sandbox --disable-gpu --use-gl=swiftshader --ozone-platform=wayland %F
    Exec=env LIBGL_ALWAYS_SOFTWARE=1 /usr/share/cursor/cursor --no-sandbox --disable-gpu --use-gl=swiftshader --ozone-platform=wayland --new-window %F
    ```
 
-3. Refresh desktop database:
+3. Update database:
 
    ```bash
    sudo update-desktop-database
    ```
 
-4. Clear any cached GPU data:
+4. Clear GPU cache:
 
    ```bash
-   rm -rf ~/.config/Cursor/GPUCache ~/.config/Cursor/Cache ~/.config/Cursor/'Code Cache'
+   rm -rf ~/.config/Cursor/{GPUCache,Cache,'Code Cache'}
    ```
 
-5. Launch **Cursor** from the application menu.
+5. Launch Cursor from menu.
 
-#### 💡 Why this works
+### 💡 Why This Works
 
-* `LIBGL_ALWAYS_SOFTWARE=1` → Forces pure software rendering (no GPU driver issues)
-* `--disable-gpu` & `--use-gl=swiftshader` → Use Chromium’s CPU-based renderer
-* `--ozone-platform=wayland` → Enables stable input handling under Wayland
+* `LIBGL_ALWAYS_SOFTWARE=1` → forces CPU rendering
+* `--disable-gpu` + `--use-gl=swiftshader` → bypasses GPU issues
+* `--ozone-platform=wayland` → ensures stable input under Wayland
 
-This fix ensures Cursor runs smoothly on **AMD-only** and **hybrid AMD + NVIDIA** laptops using Wayland.
-
-> If you update your GPU drivers or Mesa later and want hardware acceleration,
-> simply remove `LIBGL_ALWAYS_SOFTWARE=1` and `--use-gl=swiftshader` from the `Exec=` lines.
+> To restore GPU acceleration later, remove `LIBGL_ALWAYS_SOFTWARE=1` and `--use-gl=swiftshader`.
 
 ---
 
-### 🏁 License
+## 🏁 License
 
 MIT License — free to use, modify, and distribute.
 
@@ -231,14 +225,17 @@ MIT License — free to use, modify, and distribute.
 
 ## 🏆 Summary
 
-| Component                                      | Role                      | Driver                 |
-| ---------------------------------------------- | ------------------------- | ---------------------- |
-| AMD Radeon (iGPU)                              | Display / Desktop         | `amdgpu`               |
-| NVIDIA RTX / GTX                               | Compute / CUDA / Offload  | `nvidia`, `nvidia_uvm` |
-| Display Manager                                | GNOME GDM3 / Xorg         | Works normally         |
-| Black screens?                                 | ✅ Fixed                   |                        |
-| `nvidia-smi`                                   | ✅ Works                   |                        |
-| Hybrid offload (`__NV_PRIME_RENDER_OFFLOAD=1`) | ✅ Works                   |                        |
-| Cursor IDE (Wayland)                           | ✅ Fixed (software render) |                        |
+| Component                                     | Role                      | Driver                 |
+| --------------------------------------------- | ------------------------- | ---------------------- |
+| AMD Radeon (iGPU)                             | Display / Desktop         | `amdgpu`               |
+| NVIDIA RTX / GTX                              | Compute / CUDA / Offload  | `nvidia`, `nvidia_uvm` |
+| Display Manager                               | GNOME GDM3 / Xorg         | ✅ Works                |
+| Black screens?                                | ✅ Fixed                   |                        |
+| `nvidia-smi`                                  | ✅ Works                   |                        |
+| PRIME Offload (`__NV_PRIME_RENDER_OFFLOAD=1`) | ✅ Works                   |                        |
+| Cursor IDE (Wayland)                          | ✅ Fixed (software render) |                        |
 
 ---
+
+⭐ **Contributions welcome!**
+If this saved you hours of frustration, consider giving the repo a ⭐ on GitHub.
